@@ -4,12 +4,13 @@ import { storeToRefs } from 'pinia';
 import PropEditorPen from './PropEditorPen.vue';
 import { editorMenus } from '@/constants/editorMenus';
 import { useBoardStore } from '@/stores/board';
+import PenPreview from '@/components/PenPreview.vue';
 
 const boardStore = useBoardStore();
 const { divBoxConfigs } = storeToRefs(boardStore);
 
 const editorStore = useEditorStore()
-const { penSize, penPreviewBg, editorSelectedMenuIndex } = storeToRefs(editorStore)
+const { editorSelectedMenuIndex } = storeToRefs(editorStore)
 
 const clearCanvas = () => {
   divBoxConfigs.value = [];
@@ -20,16 +21,13 @@ const clearCanvas = () => {
 <template>
   <div class="mt-4 p-4 h-full flex-1 border border-solid border-slate-4 rounded-10 hover:border-green">
     <div>
-      <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" @click="clearCanvas">
-        清除
-      </button>
+      <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+        @click="clearCanvas">Clear</button>
     </div>
 
-    <!-- preview -->
     <div class="flex items-center">
       <span class="w-[6em]">preview: </span>
-      <div :style="{ background: penPreviewBg, width: penSize + 'px', height: penSize + 'px' }"
-        class="w-10 h-10 bg-slate border-[0.5px] border-solid border-slate-4"></div>
+      <PenPreview :left="0" :top="0" />
     </div>
 
     <div class="my-2 p-4 border-[0.5px] border-solid border-slate-4 rounded flex items-center flex-wrap gap-2 ">

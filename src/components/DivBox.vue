@@ -29,7 +29,7 @@ const emit = defineEmits(['close', 'update:position', 'update:rect']);
 useDraggable(el, {
   initialValue: { x: props.position.left, y: props.position.top },
   onStart(_position, e) {
-    console.log('onStart', _position)
+    // console.log('onStart', _position)
     e.stopPropagation()
     // prevent conflict with resize event
     if (_position.x > props.rect.width - 10 || _position.y > props.rect.height - 10) {
@@ -37,7 +37,7 @@ useDraggable(el, {
     }
   },
   onMove(_position, e) {
-    // console.log('onMove', position, e)
+    // console.log('onMove', _position, e.offsetX, e.offsetY)
     emit('update:position', { left: _position.x, top: _position.y })
     e.stopPropagation()
   }
@@ -56,8 +56,6 @@ const resizeObserver = new ResizeObserver((entries) => {
 
 onMounted(() => {
   resizeObserver.observe(resizeEl.value!);
-
-  console.log('eee', el.value?.getBoundingClientRect())
 })
 onUnmounted(() => {
   if (resizeEl.value) {
@@ -66,7 +64,7 @@ onUnmounted(() => {
 })
 
 const onClose = () => {
-  console.log('onClose')
+  // console.log('onClose')
   emit('close')
 }
 
