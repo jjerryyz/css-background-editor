@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDraggable } from '@vueuse/core';
-import { onMounted, onUnmounted, ref, type PropType } from 'vue';
+import { ref, type PropType } from 'vue';
 
 const props = defineProps({
   position: {
@@ -22,9 +22,8 @@ const props = defineProps({
 })
 
 const el = ref<HTMLElement | null>(null)
-const resizeEl = ref<HTMLElement | null>(null)
 
-const emit = defineEmits(['close', 'update:position', 'update:rect']);
+const emit = defineEmits(['close', 'update:position']);
 
 useDraggable(el, {
   initialValue: { x: props.position.left, y: props.position.top },
@@ -43,28 +42,7 @@ useDraggable(el, {
   }
 })
 
-
-const resizeObserver = new ResizeObserver((entries) => {
-  const entry = entries[0]
-  // console.log('entry', entry)
-  const { contentRect: { width: w, height: h } } = entry;
-
-  if (w > 10 && h > 10) {
-    emit('update:rect', { width: w, height: h })
-  }
-});
-
-onMounted(() => {
-  resizeObserver.observe(resizeEl.value!);
-})
-onUnmounted(() => {
-  if (resizeEl.value) {
-    resizeObserver.unobserve(resizeEl.value!);
-  }
-})
-
 const onClose = () => {
-  // console.log('onClose')
   emit('close')
 }
 
@@ -79,6 +57,6 @@ const onClose = () => {
     <div v-show="isSelected"
       class="i-ph-x-circle-fill absolute z-10 right-0 top-0 hover:color-green translate-y--1/2 translate-x-1/2"
       @click.stop="onClose" />
-    <div v-show="isSelected" ref="resizeEl" class="w-full h-full resize overflow-hidden" />
+    <div v-show="isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
   </div>
 </template>
