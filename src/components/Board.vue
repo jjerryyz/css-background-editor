@@ -100,8 +100,8 @@ const drawADiv = () => {
   const background = `${image} 0 0 / ${penSize.value}px ${penSize.value}px`
 
   divBoxConfigs.value.push({
-    left: align2Zero(offset.value.x - penSize.value / 2),
-    top: align2Zero(offset.value.y - penSize.value / 2),
+    left: align2Zero(align2Grid(offset.value.x) - penSize.value / 2),
+    top: align2Zero(align2Grid(offset.value.y) - penSize.value / 2),
     width: penSize.value,
     height: penSize.value,
     background,
@@ -138,19 +138,6 @@ const onUpdatePosition = (item: any, position: any) => {
   item.top = align2Grid(position.top) - item.height / 2;
 }
 
-const onClickDivBox = (index: number, e: KeyboardEvent) => {
-  console.log('onClickDivBox', index, e.ctrlKey)
-
-  if (e.ctrlKey) {
-    // ctrl key to toggle index divbox's select
-    divBoxConfigs.value[index].selected = !divBoxConfigs.value[index].selected
-    return;
-  }
-
-  divBoxConfigs.value.forEach((item, i) => {
-    item.selected = i === index;
-  })
-}
 
 const onPointerDown = (e: MouseEvent) => {
   isClick.value = true;
@@ -259,6 +246,7 @@ const onPointerUp = (e: PointerEvent) => {
 
 const onPointerLeave = (e: MouseEvent) => {
   isPointerSelecting.value = false;
+  hoveringTarget = null;
   isClick.value = false;
   offset.value.x = 0;
   offset.value.y = 0;
@@ -279,7 +267,7 @@ const onPointerLeave = (e: MouseEvent) => {
       @update:position="onUpdatePosition(item, $event)" :background="item.background" @close="boardStore.onClose()"
       :class="[isDivBoxPointless ? 'pointer-events-none' : '']" />
 
-    <PenPreview v-if="editorSelectedMenu.key === 'div'" class="absolute"
+    <PenPreview v-if="hoveringTarget && editorSelectedMenu.key === 'div'" class="absolute"
       :left="align2Zero(align2Grid(offset.x) - penSize / 2)" :top="align2Zero(align2Grid(offset.y) - penSize / 2)" />
 
 
