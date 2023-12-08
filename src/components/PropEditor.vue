@@ -2,19 +2,39 @@
 import { useEditorStore } from '@/stores/editor';
 import { storeToRefs } from 'pinia';
 import PropEditorPen from './PropEditorPen.vue';
-import { editorMenus } from '@/constants/editorMenus';
+import { editorMenus } from '@/stores/editor';
 import { useBoardStore } from '@/stores/board';
 import PenPreview from '@/components/PenPreview.vue';
+
+import { onKeyStroke } from '@vueuse/core';
 
 const boardStore = useBoardStore();
 const { divBoxConfigs } = storeToRefs(boardStore);
 
 const editorStore = useEditorStore()
-const { editorSelectedMenuIndex } = storeToRefs(editorStore)
+const { editorSelectedMenuIndex, editorSelectedMenu } = storeToRefs(editorStore)
 
 const clearCanvas = () => {
   divBoxConfigs.value = [];
 }
+
+onKeyStroke(['1', '2', '3'], (e) => {
+
+  const index = Number(e.key) - 1;
+
+  editorSelectedMenuIndex.value = index;
+  boardStore.onSwitchMenu()
+
+  e.preventDefault();
+}, { dedupe: true })
+
+onKeyStroke('Backspace', (e) => {
+  console.log('Backspace')
+  if (editorSelectedMenu.value.key == 'pointer') {
+    boardStore.onClose();
+  }
+  e.preventDefault();
+}, { dedupe: true })
 
 </script>
 
@@ -25,20 +45,21 @@ const clearCanvas = () => {
         @click="clearCanvas">Clear</button>
     </div>
 
-    <div class="flex items-center">
+    <!-- <div class="flex items-center">
       <span class="w-[6em]">preview: </span>
       <PenPreview :left="0" :top="0" />
-    </div>
+    </div> -->
 
     <div class="my-2 p-4 border-[0.5px] border-solid border-slate-4 rounded flex items-center flex-wrap gap-2 ">
       <div v-for="(item, index) in editorMenus" :key="index"
-        :class="['fn-div', editorSelectedMenuIndex === index ? 'bg-green-700' : '']"
+        :class="['flex flex-col', 'fn-div', editorSelectedMenuIndex === index ? 'bg-green-700' : '']"
         @click="editorSelectedMenuIndex = index">
         <div :class="['fn-div-icon', item.icon]"></div>
+        <div class="absolute right-[1px] bottom-0 pointer-events-none text-sm">{{ index + 1 }}</div>
       </div>
     </div>
 
-    <PropEditorPen />
+    <PropEditorPen v-if="editorSelectedMenu.key == 'div'" />
   </div>
 </template>
 
@@ -48,6 +69,6 @@ const clearCanvas = () => {
 }
 
 .fn-div-icon {
-  @apply: p-8 text-8 w-full h-full pointer-events-none;
+  @apply: p-8 text-8 pointer-events-none;
 }
 </style>

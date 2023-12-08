@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { useEditorStore } from '@/stores/editor';
 import { useDraggable } from '@vueuse/core';
-import { ref, type PropType } from 'vue';
+import { ref, computed, type PropType } from 'vue';
+import { storeToRefs } from 'pinia';
+
+const { editorSelectedMenu } = storeToRefs(useEditorStore())
 
 const props = defineProps({
   position: {
@@ -25,11 +29,15 @@ const el = ref<HTMLElement | null>(null)
 
 const emit = defineEmits(['close', 'update:position']);
 
+const isInteractive = computed(() => editorSelectedMenu.value.key == 'pointer');
+
 useDraggable(el, {
   initialValue: { x: props.position.left, y: props.position.top },
   onStart(_position, e) {
     // console.log('onStart', _position)
     e.stopPropagation()
+    if (!isInteractive.value)
+      return false;
     // prevent conflict with resize event
     if (_position.x > props.rect.width - 10 || _position.y > props.rect.height - 10) {
       return false
@@ -37,6 +45,8 @@ useDraggable(el, {
   },
   onMove(_position, e) {
     // console.log('onMove', _position, e.offsetX, e.offsetY)
+    if (!isInteractive.value)
+      return false;
     emit('update:position', { left: _position.x, top: _position.y })
     e.stopPropagation()
   }
@@ -53,10 +63,11 @@ const onClose = () => {
 <template>
   <div ref="el"
     :style="{ left: position.left + 'px', top: position.top + 'px', width: rect.width + 'px', height: rect.height + 'px', background }"
-    class="box-content absolute w-50 h-50 bg-no-repeat!" :class="[isSelected ? 'border border-solid border-green!' : '']">
-    <div v-show="isSelected"
+    class="box-content absolute w-50 h-50 bg-no-repeat!"
+    :class="[isInteractive && isSelected ? 'border border-solid border-green!' : '']">
+    <div v-show="isInteractive && isSelected"
       class="i-ph-x-circle-fill absolute z-10 right-0 top-0 hover:color-green translate-y--1/2 translate-x-1/2"
       @click.stop="onClose" />
-    <div v-show="isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
+    <div v-show="isInteractive && isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
   </div>
 </template>

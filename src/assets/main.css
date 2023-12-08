@@ -1,4 +1,5 @@
 @import './base.css';
+@unocss;
 
 #app {
   height: 100vh;

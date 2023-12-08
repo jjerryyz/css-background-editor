@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { editorMenus } from '@/constants/editorMenus'
 
 const getSafeStop = (stop: number) => {
   // fix  round edges
@@ -8,11 +7,15 @@ const getSafeStop = (stop: number) => {
     ? 100 : stop == 0
       ? 0 : stop - 0.5
 }
-
+export const editorMenus = [
+  { key: 'pointer', icon: 'i-mynaui-mouse-pointer', hint: 'mouse' },
+  { key: 'pen', icon: 'i-ph-pen', hint: 'pen mode' },
+  { key: 'div', icon: 'i-ph-square', hint: 'div mode' },
+]
 
 export const useEditorStore = defineStore('editor', () => {
 
-  const editorSelectedMenuIndex = ref(1)
+  const editorSelectedMenuIndex = ref(0)
   const editorSelectedMenu = computed(() => editorMenus[editorSelectedMenuIndex.value]);
 
   const penImageType = ref<'linear-gradient' | 'radial-gradient'>('linear-gradient');

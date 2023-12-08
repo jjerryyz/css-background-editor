@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@iconify-json/mynaui':
+    specifier: ^1.1.4
+    version: registry.npmmirror.com/@iconify-json/mynaui@1.1.4
   '@vueuse/core':
     specifier: ^10.7.0
     version: registry.npmmirror.com/@vueuse/core@10.7.0(vue@3.3.10)
@@ -830,6 +833,14 @@ packages:
     version: 2.0.1
     dev: true
 
+  registry.npmmirror.com/@iconify-json/mynaui@1.1.4:
+    resolution: {integrity: sha512-SE3lFGDOgyjtWZKQaZqW+fO5POpWEI8PpKmD1URacezKFksQX+LOT9bpR2zW8ghn7Y0yhAS5t3OKO0ZsVlTz+g==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@iconify-json/mynaui/-/mynaui-1.1.4.tgz}
+    name: '@iconify-json/mynaui'
+    version: 1.1.4
+    dependencies:
+      '@iconify/types': registry.npmmirror.com/@iconify/types@2.0.0
+    dev: false
+
   registry.npmmirror.com/@iconify-json/ph@1.1.8:
     resolution: {integrity: sha512-LtUWsiO/R2Gx4ZqHGJbJYG4XaAFkQ1+rHPQmmQ7NVTaqg7EZibB3ky1aXX12sJ2F+6z8QIpthsw3wRjReEnTig==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@iconify-json/ph/-/ph-1.1.8.tgz}
     name: '@iconify-json/ph'
@@ -842,7 +853,6 @@ packages:
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@iconify/types/-/types-2.0.0.tgz}
     name: '@iconify/types'
     version: 2.0.0
-    dev: true
 
   registry.npmmirror.com/@iconify/utils@2.1.12:
     resolution: {integrity: sha512-7vf3Uk6H7TKX4QMs2gbg5KR1X9J0NJzKSRNWhMZ+PWN92l0t6Q3tj2ZxLDG07rC3ppWBtTtA4FPmkQphuEmdsg==, registry: https://registry.npm.taobao.org/, tarball: https://registry.npmmirror.com/@iconify/utils/-/utils-2.1.12.tgz}
