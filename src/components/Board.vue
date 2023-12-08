@@ -9,13 +9,12 @@ import { align2Grid, align2Zero } from '@/utils/ui'
 import { useDebounceFn } from '@vueuse/core'
 
 const boardStore = useBoardStore()
-const { isClick, isPointerSelecting, pressOffset, offset, canvas, divBoxConfigs, currentDivBoxIndex } = storeToRefs(boardStore)
-
-const isHovering = ref(false)
+const { isClick, isPointerSelecting, pressOffset, offset, canvasEl, divBoxConfigs, currentDivBoxIndex } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore();
 const { pen, penSize, editorSelectedMenu, editorSelectedMenuIndex } = storeToRefs(editorStore)
 
+let hoveringTarget: HTMLElement | null = null;
 
 const backgroundStyle = computed(() => pen.value.join(','));
 
@@ -42,6 +41,19 @@ const pointerSelectDivStyle = computed(() => {
     top: `${pointerSelectDivStyleObj.value.top}px`,
     width: `${pointerSelectDivStyleObj.value.width}px`,
     height: `${pointerSelectDivStyleObj.value.height}px`,
+  }
+})
+
+const isDivBoxPointless = computed(() => {
+  switch (editorSelectedMenu.value.key) {
+    case 'pointer':
+      return isPointerSelecting.value;
+    case 'div':
+      return hoveringTarget === canvasEl.value;
+    case 'pen':
+      return true;
+    default:
+      return true;
   }
 })
 
@@ -106,7 +118,6 @@ const drawADiv = () => {
 
 
 const checkDivBoxSelected = useDebounceFn(() => {
-  if (!isPointerSelecting.value) return false;
   for (let i = 0; i < divBoxConfigs.value.length; i++) {
     const item = divBoxConfigs.value[i];
     const { left, top, width, height } = item;
@@ -128,11 +139,12 @@ const onUpdatePosition = (item: any, position: any) => {
 }
 
 const onClickDivBox = (index: number, e: KeyboardEvent) => {
+  console.log('onClickDivBox', index, e.ctrlKey)
 
-  if (divBoxConfigs.value.filter(item => item.selected).length > 1) {
-    if (e.ctrlKey) {
-
-    }
+  if (e.ctrlKey) {
+    // ctrl key to toggle index divbox's select
+    divBoxConfigs.value[index].selected = !divBoxConfigs.value[index].selected
+    return;
   }
 
   divBoxConfigs.value.forEach((item, i) => {
@@ -168,26 +180,26 @@ const onPointerDown = (e: MouseEvent) => {
 
 
 const onPointerMove = (e: MouseEvent) => {
-  isHovering.value = true;
+  if (isClick.value) {
+    isPointerSelecting.value = true;
+  } else {
+    isPointerSelecting.value = false;
+  }
 
-  const target = e.target as HTMLElement;
+  hoveringTarget = e.target as HTMLElement;
 
   offset.value.x = e.offsetX;
   offset.value.y = e.offsetY;
 
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
-      if (isClick.value) {
-        // check if divBox is Selected
+      // check if divBox is Selected
+      if (isPointerSelecting.value) {
         checkDivBoxSelected();
       }
       break;
     }
     case 'div': {
-      if (target.id !== canvas.value!.id) {
-        isHovering.value = false;
-        return;
-      }
       break;
     }
     case 'pen':
@@ -200,21 +212,53 @@ const onPointerMove = (e: MouseEvent) => {
 
 }
 
-const onPointerUp = (e: MouseEvent) => {
-  isClick.value = false;
+const onPointerUp = (e: PointerEvent) => {
+  // console.log('onPointerUp', e)
+
+  const target = e.target as HTMLElement;
+  const targetId = target.id;
 
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
-      checkDivBoxSelected();
+      // handle pointer select
+      if (isPointerSelecting.value) {
+        checkDivBoxSelected();
+        break;
+      }
+      // handle click board
+      if (target == canvasEl.value) {
+        divBoxConfigs.value.forEach(item => item.selected = false)
+      } else if (targetId == 'resize' || targetId!.startsWith('divbox_')) {
+        // handle click divbox
+        let index = 0;
+        if (targetId == 'resize') {
+          index = +target.parentElement!.id.split('_')[1];
+        } else {
+          index = +targetId.split('_')[1];
+        }
+
+        if (e.ctrlKey) {
+          // ctrl key to toggle index divbox's select
+          divBoxConfigs.value[index].selected = !divBoxConfigs.value[index].selected
+          return;
+        }
+
+        divBoxConfigs.value.forEach((item, i) => {
+          item.selected = i === index;
+        })
+      }
+
       break;
     }
     default:
       break;
   }
+  isClick.value = false;
+  isPointerSelecting.value = false;
 }
 
 const onPointerLeave = (e: MouseEvent) => {
-  isHovering.value = false;
+  isPointerSelecting.value = false;
   isClick.value = false;
   offset.value.x = 0;
   offset.value.y = 0;
@@ -227,15 +271,15 @@ const onPointerLeave = (e: MouseEvent) => {
 <template>
   <!-- Canvas -->
   <div id="canvas" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerleave="onPointerLeave"
-    @pointerup="onPointerUp" :style="{ background: backgroundStyle, backgroundRepeat: 'no-repeat' }" ref="canvas"
+    @pointerup="onPointerUp" :style="{ background: backgroundStyle, backgroundRepeat: 'no-repeat' }" ref="canvasEl"
     class="m-4 h-full flex-[3] box-content overflow-hidden border border-solid border-slate-4 rounded-10 hover:border-green relative bg-grid">
 
     <DivBox v-for="(item, index) in divBoxConfigs" :id="'divbox_' + index" :is-selected="item.selected" :key="index"
       :rect="{ width: item.width, height: item.height }" :position="{ left: item.left, top: item.top }"
       @update:position="onUpdatePosition(item, $event)" :background="item.background" @close="boardStore.onClose()"
-      @click="onClickDivBox(index, $event)" :class="[isPointerSelecting ? 'pointer-events-none' : '']" />
+      :class="[isDivBoxPointless ? 'pointer-events-none' : '']" />
 
-    <PenPreview v-if="editorSelectedMenu.key === 'div' && isHovering" class="absolute"
+    <PenPreview v-if="editorSelectedMenu.key === 'div'" class="absolute"
       :left="align2Zero(align2Grid(offset.x) - penSize / 2)" :top="align2Zero(align2Grid(offset.y) - penSize / 2)" />
 
 

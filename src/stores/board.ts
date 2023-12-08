@@ -7,20 +7,13 @@ export const useBoardStore = defineStore("board", () => {
 
   const editor = useEditorStore();
 
-  const canvas = ref<HTMLDivElement>()
+  const canvasEl = ref<HTMLDivElement>()
 
   const divBoxConfigs = ref<{ left: number, top: number; width: number; height: number, background: string, selected: boolean }[]>([]);
 
   const isClick = ref(false);
 
-  const isPointerSelecting = computed(() => {
-    const moveOffsetX = Math.abs(pressOffset.value.x - offset.value.x);
-    const moveOffsetY = Math.abs(pressOffset.value.y - offset.value.y);
-    // console.log('isPointerSelecting', moveOffsetX, moveOffsetY);
-    if (moveOffsetX < 0.1 && moveOffsetY < 0.1) return false;
-
-    return isClick.value && editor.editorSelectedMenu.key === 'pointer';
-  });
+  const isPointerSelecting = ref(false);
 
   const offset = ref({ x: 0, y: 0 })
 
@@ -48,7 +41,9 @@ export const useBoardStore = defineStore("board", () => {
 
   const onSwitchMenu = () => {
     isClick.value = false;
+    divBoxConfigs.value.forEach(item => item.selected = false);
+    currentDivBoxIndex.value = -1;
   }
 
-  return { canvas, divBoxConfigs, isClick, isPointerSelecting, pressOffset, offset, currentDivBoxIndex, onClose, onSwitchMenu }
+  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pressOffset, offset, currentDivBoxIndex, onClose, onSwitchMenu }
 })
