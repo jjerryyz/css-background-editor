@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia';
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import DivBox from './DivBox.vue';
 import PenPreview from './PenPreview.vue';
+import { align2Grid, align2Zero } from '@/utils/ui'
 
 const { isClick, offset, canvas, divBoxConfigs } = storeToRefs(useBoardStore())
 
@@ -50,14 +51,14 @@ onUnmounted(() => {
   resizeObserver.disconnect();
 })
 
-const drawADiv = (e: MouseEvent) => {
+const drawADiv = () => {
 
   const image = editorStore.getPenImage();
   const background = `${image} 0 0 / ${penSize.value}px ${penSize.value}px`
 
   divBoxConfigs.value.push({
-    left: e.offsetX - penSize.value / 2,
-    top: e.offsetY - penSize.value / 2,
+    left: align2Zero(offset.value.x - penSize.value / 2),
+    top: align2Zero(offset.value.y - penSize.value / 2),
     width: penSize.value,
     height: penSize.value,
     background
@@ -72,14 +73,21 @@ const drawADiv = (e: MouseEvent) => {
 
 const onUpdatePosition = (item: any, position: any) => {
   // console.log('onUpdatePosition', item, position)
-  item.left = position.left - (item.width / 2) + 5;
-  item.top = position.top - item.height / 2 - 5;
+  item.left = align2Grid(position.left) - item.width / 2;
+  item.top = align2Grid(position.top) - item.height / 2;
 }
 
 
 const onPointerDown = (e: MouseEvent) => {
   isClick.value = true;
-  drawADiv(e);
+  updateOffset(e);
+  drawADiv();
+}
+
+
+const updateOffset = (e: MouseEvent) => {
+  offset.value.x = align2Grid(e.offsetX);
+  offset.value.y = align2Grid(e.offsetY);
 }
 
 const onPointerMove = (e: MouseEvent) => {
@@ -87,20 +95,16 @@ const onPointerMove = (e: MouseEvent) => {
 
   const target = e.target as HTMLElement;
 
-  let offsetX = e.offsetX;
-  let offsetY = e.offsetY;
-
   if (target.id !== canvas.value!.id) {
     isHovering.value = false;
     return;
   }
 
-  offset.value.x = offsetX;
-  offset.value.y = offsetY;
+  updateOffset(e);
 
   if (editorSelectedMenu.value.key === 'pen') {
     if (isClick.value) {
-      drawADiv(e)
+      drawADiv()
     }
   }
 }
@@ -132,14 +136,23 @@ const onClose = (item: any) => {
   <!-- Canvas -->
   <div id="canvas" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerleave="onPointerLeave"
     @pointerup="onPointerUp" :style="{ background: backgroundStyle, backgroundRepeat: 'no-repeat' }" ref="canvas"
-    class="m-4 h-full flex-[3] border border-solid border-slate-4 rounded-10 hover:border-green relative">
+    class="m-4 h-full flex-[3] box-content overflow-hidden border border-solid border-slate-4 rounded-10 hover:border-green relative bg-grid">
 
     <DivBox v-for="(item, index) in divBoxConfigs" :id="'divbox_' + index" :is-selected="currentDivBoxIndex === index"
       :key="index" :rect="{ width: item.width, height: item.height }" :position="{ left: item.left, top: item.top }"
       @update:position="onUpdatePosition(item, $event)" :background="item.background" @close="onClose(item)"
       @click="currentDivBoxIndex = index" />
 
-    <PenPreview class="absolute" v-show="isHovering" :left="offset.x - penSize / 2" :top="offset.y - penSize / 2" />
+    <PenPreview class="absolute" v-show="isHovering" :left="align2Zero(offset.x - penSize / 2)"
+      :top="align2Zero(offset.y - penSize / 2)" />
+    <div>offset{{ offset.x }}, {{ offset.y }}</div>
 
   </div>
 </template>
+
+<style scoped >
+.bg-grid {
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 9.5px, #000 9.5px, #000 10px),
+    repeating-linear-gradient(90deg, transparent, transparent 9.5px, #000 9.5px, #000 10px);
+}
+</style>
