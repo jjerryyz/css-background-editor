@@ -5,7 +5,8 @@ export const align2Grid = (value: number) => {
   return rest > 5 ? (i + 1) * 10 : i * 10;
 }
 
-export const align2Zero = (value: number) => {
-  if (value <= 0) return 0;
-  return value;
+export const align2Range = (value: number, range: number[]) => {
+  const min = range[0] || 0;
+  const max = range[1];
+  return Math.min(max, Math.max(min, value))
 }

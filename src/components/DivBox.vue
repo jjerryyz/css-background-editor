@@ -16,13 +16,17 @@ const props = defineProps({
     default: () => ({ width: 50, height: 50 })
   },
   background: {
-    type: String,
-    default: '',
+    type: Object as PropType<Base.DivBox['background']>,
+    default: () => ([]),
   },
   isSelected: {
     type: Boolean,
     default: false,
   },
+  isResizable: {
+    type: Boolean,
+    default: true,
+  }
 })
 
 const el = ref<HTMLElement | null>(null)
@@ -30,6 +34,12 @@ const el = ref<HTMLElement | null>(null)
 const emit = defineEmits(['close', 'update:position']);
 
 const isInteractive = computed(() => editorSelectedMenu.value.key == 'pointer');
+
+const backgroundStr = computed(() => {
+  return props.background.map(bg => {
+    return `${bg.image} ${bg.x}px ${bg.y}px / ${bg.w}px ${bg.h}px`
+  }).join(',');
+})
 
 useDraggable(el, {
   initialValue: { x: props.position.left, y: props.position.top },
@@ -56,18 +66,23 @@ const onClose = () => {
   emit('close')
 }
 
+
 </script>
 
 
 
 <template>
   <div ref="el"
-    :style="{ left: position.left + 'px', top: position.top + 'px', width: rect.width + 'px', height: rect.height + 'px', background }"
-    class="box-content absolute w-50 h-50 bg-no-repeat!"
+    :style="{ left: position.left + 'px', top: position.top + 'px', width: rect.width + 'px', height: rect.height + 'px', background: backgroundStr }"
+    class="box-content absolute w-50 h-50   bg-no-repeat!"
     :class="[isInteractive && isSelected ? 'border border-solid border-green!' : '']">
+
+    <!-- close handle -->
     <div v-show="isInteractive && isSelected"
       class="i-ph-x-circle-fill absolute z-10 right-0 top-0 hover:color-green translate-y--1/2 translate-x-1/2"
       @click.stop="onClose" />
-    <div v-show="isInteractive && isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
+
+    <!-- resize handle -->
+    <div v-show="isInteractive && isResizable && isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
   </div>
 </template>

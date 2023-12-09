@@ -1,15 +1,17 @@
-import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { defineStore, storeToRefs } from "pinia";
+import { ref, computed, nextTick } from "vue";
 import { useEditorStore } from "./editor";
-import { align2Grid } from "@/utils/ui";
+import { align2Grid, align2Range } from "@/utils/ui";
 
 export const useBoardStore = defineStore("board", () => {
 
-  const editor = useEditorStore();
+  const editorStore = useEditorStore();
+
+  const { penSize, editorSelectedMenuIndex } = storeToRefs(editorStore)
 
   const canvasEl = ref<HTMLDivElement>()
 
-  const divBoxConfigs = ref<{ left: number, top: number; width: number; height: number, background: string, selected: boolean }[]>([]);
+  const divBoxConfigs = ref<Base.DivBox[]>([]);
 
   const isClick = ref(false);
 
@@ -21,9 +23,51 @@ export const useBoardStore = defineStore("board", () => {
 
   const currentDivBoxIndex = ref(-1);
 
+  const pointerSelectDivStyleObj = computed(() => {
+    let { x: left, y: top } = pressOffset.value;
+    const { x, y } = offset.value;
+
+    const width = Math.abs(x - left);
+    const height = Math.abs(y - top);
+
+    if (x < left) {
+      left = x;
+    }
+    if (y < top) {
+      top = y;
+    }
+
+    return { left: left, top: top, width: width, height: height }
+  })
+
+  const align2Board = (value: number) => align2Range(value, [0, canvasEl.value!.offsetWidth])
+
+  const drawDivBox = (options: Partial<Base.DivBox> = {}) => {
+
+    const image = editorStore.getPenImage()!;
+    const background: Base.DivBox['background'] = [{ image, x: 0, y: 0, w: penSize.value, h: penSize.value }]
+
+    divBoxConfigs.value.push({
+      left: align2Board(align2Grid(offset.value.x) - penSize.value / 2),
+      top: align2Board(align2Grid(offset.value.y) - penSize.value / 2),
+      width: penSize.value,
+      height: penSize.value,
+      background,
+      selected: false,
+      isResizable: true,
+      ...options
+    })
+
+    nextTick(() => {
+      currentDivBoxIndex.value = - 1;
+      editorSelectedMenuIndex.value = 0;
+      isClick.value = false;
+    })
+  }
+
   const onClose = () => {
     // console.log('onClose', item)
-    switch (editor.editorSelectedMenu.key) {
+    switch (editorStore.editorSelectedMenu.key) {
       case 'div':
         if (currentDivBoxIndex.value != -1) {
           divBoxConfigs.value.splice(currentDivBoxIndex.value, 1);
@@ -45,5 +89,5 @@ export const useBoardStore = defineStore("board", () => {
     currentDivBoxIndex.value = -1;
   }
 
-  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pressOffset, offset, currentDivBoxIndex, onClose, onSwitchMenu }
+  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, currentDivBoxIndex, align2Board, drawDivBox, onClose, onSwitchMenu }
 })

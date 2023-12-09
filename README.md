@@ -4,5 +4,6 @@ css background editor
 
 # TODO
 
-[ ] align line in board
-[ ]
+[x] align line in board
+[ ] copy/paste divbox
+[ ] optimize divbox initial position when draging

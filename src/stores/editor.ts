@@ -9,7 +9,7 @@ const getSafeStop = (stop: number) => {
 }
 export const editorMenus = [
   { key: 'pointer', icon: 'i-mynaui-mouse-pointer', hint: 'mouse' },
-  { key: 'pen', icon: 'i-ph-pen', hint: 'pen mode' },
+  // { key: 'pen', icon: 'i-ph-pen', hint: 'pen mode' },
   { key: 'div', icon: 'i-ph-square', hint: 'div mode' },
 ]
 
@@ -48,11 +48,7 @@ export const useEditorStore = defineStore('editor', () => {
     if (penImageType.value === 'linear-gradient') {
       const { deg, stop, color } = linearGradientObj.value;
       const stopVal = getSafeStop(stop)
-      image = `linear-gradient(
-      ${deg}deg, 
-      ${color}, ${stopVal}%, 
-      transparent ${stop}%
-      )`
+      image = `linear-gradient(${deg}deg, ${color}, ${stopVal}%, transparent ${stop}%)`
     } else if (penImageType.value === 'radial-gradient') {
       const { shape: _shape, shapeSize, position, stop, color } = radialGradientObj.value;
       let shape = _shape;
@@ -61,11 +57,7 @@ export const useEditorStore = defineStore('editor', () => {
       }
       if (!shape) return;
       const stopVal = getSafeStop(stop)
-      image = `radial-gradient(
-      ${shape} at ${position}, 
-      ${color} ${stopVal}%, 
-      transparent ${stop}%
-      )`
+      image = `radial-gradient(${shape} at ${position}, ${color} ${stopVal}%, transparent ${stop}%)`
     }
     return image;
   }

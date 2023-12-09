@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useEditorStore } from '@/stores/editor';
 import { storeToRefs } from 'pinia';
+import PropEditorPointer from './PropEditorPointer.vue';
 import PropEditorPen from './PropEditorPen.vue';
 import { editorMenus } from '@/stores/editor';
 import { useBoardStore } from '@/stores/board';
-import PenPreview from '@/components/PenPreview.vue';
 
 import { onKeyStroke } from '@vueuse/core';
 
@@ -36,6 +36,40 @@ onKeyStroke('Backspace', (e) => {
   e.preventDefault();
 }, { dedupe: true })
 
+onKeyStroke('c', (e) => {
+  if (!e.ctrlKey) return;
+  console.log('Copy', boardStore.currentDivBoxIndex)
+  if (boardStore.currentDivBoxIndex != -1) {
+    const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex];
+    const content = JSON.stringify(divBox);
+    // set system clipboard
+    navigator.clipboard.writeText(content).then(() => {
+      console.log('copy success')
+    }, () => {
+      console.log('copy fail')
+    });
+  }
+  e.preventDefault();
+}, { dedupe: true })
+
+onKeyStroke('v', (e) => {
+  if (!e.ctrlKey) return;
+  console.log('Paste')
+  navigator.clipboard.readText().then((content) => {
+    console.log('paste success', content)
+    const divBox: Base.DivBox = JSON.parse(content);
+    boardStore.drawDivBox({
+      width: divBox.width,
+      height: divBox.height,
+      background: divBox.background,
+      isResizable: divBox.isResizable,
+    })
+  }, () => {
+    console.log('paste fail')
+  });
+  e.preventDefault();
+}, { dedupe: true })
+
 </script>
 
 <template>
@@ -58,6 +92,8 @@ onKeyStroke('Backspace', (e) => {
         <div class="absolute right-[1px] bottom-0 pointer-events-none text-sm">{{ index + 1 }}</div>
       </div>
     </div>
+
+    <PropEditorPointer v-if="editorSelectedMenu.key == 'pointer'" />
 
     <PropEditorPen v-if="editorSelectedMenu.key == 'div'" />
   </div>

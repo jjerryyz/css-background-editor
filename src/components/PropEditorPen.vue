@@ -10,7 +10,7 @@ const { penImageType, penSize, linearGradientObj, radialGradientObj } = storeToR
 
 
 <template>
-  <div class="">
+  <div>
     <span class="w-[6em]">pen image: </span>
     <select v-model="penImageType">
       <option value="linear-gradient">linear-gradient</option>
@@ -59,6 +59,7 @@ const { penImageType, penSize, linearGradientObj, radialGradientObj } = storeToR
     </div>
 
   </div>
+
   <div class="my-4 border-0 border-solid border-t-1 border-slate-4"></div>
 
   <div class="flex items-center">
