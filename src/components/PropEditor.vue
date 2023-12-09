@@ -9,7 +9,7 @@ import { useBoardStore } from '@/stores/board';
 import { onKeyStroke } from '@vueuse/core';
 
 const boardStore = useBoardStore();
-const { divBoxConfigs } = storeToRefs(boardStore);
+const { divBoxConfigs, canvasEl } = storeToRefs(boardStore);
 
 const editorStore = useEditorStore()
 const { editorSelectedMenuIndex, editorSelectedMenu } = storeToRefs(editorStore)
@@ -19,7 +19,7 @@ const clearCanvas = () => {
 }
 
 onKeyStroke(['1', '2', '3'], (e) => {
-
+  if (e.target != canvasEl.value) return;
   const index = Number(e.key) - 1;
 
   editorSelectedMenuIndex.value = index;
@@ -29,6 +29,7 @@ onKeyStroke(['1', '2', '3'], (e) => {
 }, { dedupe: true })
 
 onKeyStroke('Backspace', (e) => {
+  if (e.target != canvasEl.value) return;
   console.log('Backspace')
   if (editorSelectedMenu.value.key == 'pointer') {
     boardStore.onClose();
@@ -37,6 +38,7 @@ onKeyStroke('Backspace', (e) => {
 }, { dedupe: true })
 
 onKeyStroke('c', (e) => {
+  if (e.target != canvasEl.value) return;
   if (!e.ctrlKey) return;
   console.log('Copy', boardStore.currentDivBoxIndex)
   if (boardStore.currentDivBoxIndex != -1) {
@@ -53,6 +55,7 @@ onKeyStroke('c', (e) => {
 }, { dedupe: true })
 
 onKeyStroke('v', (e) => {
+  if (e.target != canvasEl.value) return;
   if (!e.ctrlKey) return;
   console.log('Paste')
   navigator.clipboard.readText().then((content) => {
