@@ -40,13 +40,97 @@ export const useBoardStore = defineStore('board', () => {
 
   const align2Board = (value: number) => align2Range(value, [0, canvasEl.value!.offsetWidth])
 
+  const alignLineHStyle = ref<{ left: string, top: string, width: string, height: string }>()
+  const alignLineVStyle = ref<{ left: string, top: string, width: string, height: string }>()
+
+  const align2NearestBox = (position: { x: number, y: number }, divBox: Base.DivBox) => {
+    let x = position.x
+    let y = position.y
+    if (divBoxConfigs.value.length > 1) {
+      const gap = 10
+      for (let i = 0; i < divBoxConfigs.value.length; i++) {
+        const item = divBoxConfigs.value[i]
+        if (divBox === item)
+          continue
+
+        const { left, top, width, height } = item
+        const right = left + width
+        const bottom = top + height
+
+        let match: 'left' | 'right' | 'top' | 'bottom' | '' = ''
+        let matchV: 'top' | 'bottom' | '' = ''
+
+        if (Math.abs(left - position.x) < gap) {
+          x = left
+          match = 'left'
+        }
+        else if (Math.abs(right - position.x) < gap) {
+          x = right
+          match = 'left'
+        }
+        else if (Math.abs(left - (position.x + divBox.width)) < gap) {
+          x = left - divBox.width
+          match = 'right'
+        }
+        else if (Math.abs(right - (position.x + divBox.width)) < gap) {
+          x = right - divBox.width
+          match = 'right'
+        }
+
+        if (Math.abs(top - position.y) < gap) {
+          y = top
+          matchV = 'top'
+        }
+        else if (Math.abs(bottom - position.y) < gap) {
+          y = bottom
+          matchV = 'top'
+        }
+        else if (Math.abs(top - (position.y + divBox.height)) < gap) {
+          y = top - divBox.height
+          matchV = 'bottom'
+        }
+        else if (Math.abs(bottom - (position.y + divBox.height)) < gap) {
+          y = bottom - divBox.height
+          matchV = 'bottom'
+        }
+
+        if (match) {
+          alignLineHStyle.value = {
+            left: `${match === 'right' ? x + divBox.width : x}px`,
+            top: `${y}px`,
+            width: `1px`,
+            height: `100px`,
+          }
+        }
+        if (matchV) {
+          alignLineVStyle.value = {
+            left: `${x}px`,
+            top: `${matchV === 'bottom' ? y + divBox.height : y}px`,
+            width: `100px`,
+            height: `1px`,
+          }
+        }
+      // if (match || matchV)
+      //   break
+      }
+    }
+    return { x, y }
+  }
+
   const drawDivBox = (options: Partial<Base.DivBox> = {}) => {
     const image = editorStore.getPenImage()!
-    const background: Base.DivBox['background'] = [{ image, x: 0, y: 0, w: penSize.value, h: penSize.value }]
+
+    const background: Base.DivBox['background'] = [{
+      image,
+      x: 0,
+      y: 0,
+      w: options.width ? options.width : penSize.value,
+      h: options.height ? options.height : penSize.value,
+    }]
 
     divBoxConfigs.value.push({
-      left: align2Board(offset.value.x - penSize.value / 2),
-      top: align2Board(offset.value.y - penSize.value / 2),
+      left: options.left ? options.left : align2Board(offset.value.x - penSize.value / 2),
+      top: options.top ? options.top : align2Board(offset.value.y - penSize.value / 2),
       width: penSize.value,
       height: penSize.value,
       background,
@@ -86,5 +170,5 @@ export const useBoardStore = defineStore('board', () => {
     currentDivBoxIndex.value = -1
   }
 
-  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, currentDivBoxIndex, align2Board, drawDivBox, onClose, onSwitchMenu }
+  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, currentDivBoxIndex, alignLineHStyle, alignLineVStyle, align2NearestBox, align2Board, drawDivBox, onClose, onSwitchMenu }
 })

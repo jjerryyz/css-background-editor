@@ -8,19 +8,14 @@ import { useEditorStore } from '@/stores/editor'
 import { useBoardStore } from '@/stores/board'
 
 const boardStore = useBoardStore()
-const { align2Board } = boardStore
+const { align2Board, align2NearestBox } = boardStore
 
-const { isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, canvasEl, divBoxConfigs, currentDivBoxIndex } = storeToRefs(boardStore)
+const { isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, canvasEl, divBoxConfigs, currentDivBoxIndex, alignLineHStyle, alignLineVStyle } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore()
 const { pen, penSize, editorSelectedMenu } = storeToRefs(editorStore)
 
 let hoveringTarget: HTMLElement | null = null
-
-const alignLineHStyle = ref<{ left: string, top: string, width: string, height: string }>()
-const alignLineVStyle = ref<{ left: string, top: string, width: string, height: string }>()
-
-const isDragging = ref(false)
 
 const backgroundStyle = computed(() => pen.value.join(','))
 
@@ -94,83 +89,29 @@ const checkDivBoxSelected = useDebounceFn(() => {
   }
 }, 10)
 
-function onUpdatePosition(divBox: Base.DivBox, position: { x: number, y: number }) {
+function onUpdatePosition(divBox: Base.DivBox, position: { x: number, y: number, e: PointerEvent }) {
   // find the nearest divBox
-  let x = position.x
-  let y = position.y
+  let x = 0; let y = 0
+
   alignLineHStyle.value = undefined
   alignLineVStyle.value = undefined
-  if (divBoxConfigs.value.length > 1) {
-    const gap = 10
-    for (let i = 0; i < divBoxConfigs.value.length; i++) {
-      const item = divBoxConfigs.value[i]
-      if (divBox === item)
-        continue
-
-      const { left, top, width, height } = item
-      const right = left + width
-      const bottom = top + height
-
-      let match: 'left' | 'right' | 'top' | 'bottom' | '' = ''
-      let matchV: 'top' | 'bottom' | '' = ''
-
-      if (Math.abs(left - position.x) < gap) {
-        x = left
-        match = 'left'
-      }
-      else if (Math.abs(right - position.x) < gap) {
-        x = right
-        match = 'left'
-      }
-      else if (Math.abs(left - (position.x + divBox.width)) < gap) {
-        x = left - divBox.width
-        match = 'right'
-      }
-      else if (Math.abs(right - (position.x + divBox.width)) < gap) {
-        x = right - divBox.width
-        match = 'right'
-      }
-
-      if (Math.abs(top - position.y) < gap) {
-        y = top
-        matchV = 'top'
-      }
-      else if (Math.abs(bottom - position.y) < gap) {
-        y = bottom
-        matchV = 'top'
-      }
-      else if (Math.abs(top - (position.y + divBox.height)) < gap) {
-        y = top - divBox.height
-        matchV = 'bottom'
-      }
-      else if (Math.abs(bottom - (position.y + divBox.height)) < gap) {
-        y = bottom - divBox.height
-        matchV = 'bottom'
-      }
-
-      if (match) {
-        alignLineHStyle.value = {
-          left: `${match === 'right' ? x + divBox.width : x}px`,
-          top: `${y}px`,
-          width: `1px`,
-          height: `100px`,
-        }
-      }
-      if (matchV) {
-        alignLineVStyle.value = {
-          left: `${x}px`,
-          top: `${matchV === 'bottom' ? y + divBox.height : y}px`,
-          width: `100px`,
-          height: `1px`,
-        }
-      }
-      // if (match || matchV)
-      //   break
-    }
+  if (position.e.ctrlKey) {
+    const { x: _x, y: _y } = align2NearestBox(position, divBox)
+    x = _x
+    y = _y
+  }
+  else {
+    x = position.x
+    y = position.y
   }
 
   divBox.left = align2Board(x)
   divBox.top = align2Board(y)
+}
+
+function onDragEnd() {
+  alignLineHStyle.value = undefined
+  alignLineVStyle.value = undefined
 }
 
 function handleSelectDivBox(e: PointerEvent) {
@@ -214,10 +155,10 @@ function onPointerDown(e: MouseEvent) {
     }
     case 'div': {
       // clear select box
-      if (currentDivBoxIndex.value !== -1)
-        currentDivBoxIndex.value = -1
+      // if (currentDivBoxIndex.value !== -1)
+      //   currentDivBoxIndex.value = -1
 
-      boardStore.drawDivBox()
+      // boardStore.drawDivBox()
       break
     }
     default:
@@ -264,6 +205,8 @@ function onPointerUp(e: PointerEvent) {
   const target = e.target as HTMLElement
   const targetId = target.id
 
+  updateOffset(e)
+
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
       // handle pointer select
@@ -276,6 +219,18 @@ function onPointerUp(e: PointerEvent) {
         divBoxConfigs.value.forEach(item => item.selected = false)
       else if (targetId === 'resize' || targetId!.startsWith('divbox_'))
         handleSelectDivBox(e)
+
+      break
+    }
+    case 'div': {
+      if (isPointerSelecting) {
+        boardStore.drawDivBox({
+          left: pointerSelectDivStyleObj.value.left,
+          top: pointerSelectDivStyleObj.value.top,
+          width: pointerSelectDivStyleObj.value.width,
+          height: pointerSelectDivStyleObj.value.height,
+        })
+      }
 
       break
     }
@@ -306,18 +261,13 @@ function onPointerLeave() {
       v-for="(item, index) in divBoxConfigs" :id="`divbox_${index}`" :key="index"
       :is-selected="item.selected" :is-resizable="item.isResizable" :rect="{ width: item.width, height: item.height }" :position="{ left: item.left, top: item.top }"
       :background="item.background" :class="[isDivBoxPointless ? 'pointer-events-none' : '']"
-      @update:is-dragging="isDragging = $event" @update:position="onUpdatePosition(item, $event)"
+      @darg-end="onDragEnd" @update:position="onUpdatePosition(item, $event)"
       @close="boardStore.onClose()"
     />
 
     <!-- align line -->
-    <div v-if="editorSelectedMenu.key === 'pointer' && isDragging" :style="alignLineHStyle" class="pointer-events-none absolute bg-red" />
-    <div v-if="editorSelectedMenu.key === 'pointer' && isDragging" :style="alignLineVStyle" class="pointer-events-none absolute bg-red" />
-
-    <PenPreview
-      v-if="hoveringTarget && editorSelectedMenu.key === 'div'" class="absolute"
-      :left="align2Board(offset.x - penSize / 2)" :top="align2Board(offset.y - penSize / 2)"
-    />
+    <div v-if="editorSelectedMenu.key === 'pointer' && alignLineHStyle" :style="alignLineHStyle" class="pointer-events-none absolute bg-red" />
+    <div v-if="editorSelectedMenu.key === 'pointer' && alignLineVStyle" :style="alignLineVStyle" class="pointer-events-none absolute bg-red" />
 
     <div
       v-if="isPointerSelecting" class="pointer-events-none absolute border border-green border-solid"
