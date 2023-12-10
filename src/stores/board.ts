@@ -1,7 +1,7 @@
 import { defineStore, storeToRefs } from 'pinia'
 import { computed, nextTick, ref } from 'vue'
 import { useEditorStore } from './editor'
-import { align2Grid, align2Range } from '@/utils/ui'
+import { align2Range } from '@/utils/ui'
 
 export const useBoardStore = defineStore('board', () => {
   const editorStore = useEditorStore()
@@ -45,8 +45,8 @@ export const useBoardStore = defineStore('board', () => {
     const background: Base.DivBox['background'] = [{ image, x: 0, y: 0, w: penSize.value, h: penSize.value }]
 
     divBoxConfigs.value.push({
-      left: align2Board(align2Grid(offset.value.x) - penSize.value / 2),
-      top: align2Board(align2Grid(offset.value.y) - penSize.value / 2),
+      left: align2Board(offset.value.x - penSize.value / 2),
+      top: align2Board(offset.value.y - penSize.value / 2),
       width: penSize.value,
       height: penSize.value,
       background,

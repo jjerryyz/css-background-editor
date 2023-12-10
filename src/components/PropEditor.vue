@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
 import { onKeyStroke } from '@vueuse/core'
-import PropEditorPointer from './PropEditorPointer.vue'
+import { storeToRefs } from 'pinia'
 import PropEditorPen from './PropEditorPen.vue'
+import PropEditorPointer from './PropEditorPointer.vue'
 import { editorMenus, useEditorStore } from '@/stores/editor'
 
 import { useBoardStore } from '@/stores/board'
 
 const boardStore = useBoardStore()
-const { divBoxConfigs, canvasEl } = storeToRefs(boardStore)
+const { divBoxConfigs } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore()
 const { editorSelectedMenuIndex, editorSelectedMenu } = storeToRefs(editorStore)
@@ -17,63 +17,79 @@ function clearCanvas() {
   divBoxConfigs.value = []
 }
 
-onKeyStroke(['1', '2', '3'], (e) => {
-  console.log('1,2,3', e.target)
-  const index = Number(e.key) - 1
-
-  editorSelectedMenuIndex.value = index
-  boardStore.onSwitchMenu()
-
-  e.preventDefault()
-}, { dedupe: true, target: canvasEl.value })
-
-onKeyStroke('Backspace', (e) => {
-  if (e.target !== canvasEl.value)
+onKeyStroke(['1', '2', '3', 'Backspace', 'c', 'v', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'], (e) => {
+  if (e.target !== document.body)
     return
-  console.log('Backspace')
-  if (editorSelectedMenu.value.key === 'pointer')
-    boardStore.onClose()
 
-  e.preventDefault()
-}, { dedupe: true })
-
-onKeyStroke('c', (e) => {
-  if (e.target !== canvasEl.value)
-    return
-  if (!e.ctrlKey)
-    return
-  console.log('Copy', boardStore.currentDivBoxIndex)
-  if (boardStore.currentDivBoxIndex !== -1) {
-    const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex]
-    const content = JSON.stringify(divBox)
-    // set system clipboard
-    navigator.clipboard.writeText(content).then(() => {
-      console.log('copy success')
-    }, () => {
-      console.log('copy fail')
-    })
+  switch (e.key) {
+    case '1':
+    case '2':
+    case '3': {
+      const index = Number(e.key) - 1
+      editorSelectedMenuIndex.value = index
+      boardStore.onSwitchMenu()
+      break
+    }
+    case 'Backspace': {
+      console.log('Backspace')
+      if (editorSelectedMenu.value.key === 'pointer')
+        boardStore.onClose()
+      break
+    }
+    case 'c': {
+      if (!e.ctrlKey)
+        return
+      console.log('Copy', boardStore.currentDivBoxIndex)
+      if (boardStore.currentDivBoxIndex !== -1) {
+        const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex]
+        const content = JSON.stringify(divBox)
+        // set system clipboard
+        navigator.clipboard.writeText(content).then(() => {
+          console.log('copy success')
+        }, () => {
+          console.log('copy fail')
+        })
+      }
+      break
+    }
+    case 'v': {
+      if (!e.ctrlKey)
+        return
+      console.log('Paste')
+      navigator.clipboard.readText().then((content) => {
+        console.log('paste success', content)
+        const divBox: Base.DivBox = JSON.parse(content)
+        boardStore.drawDivBox({
+          width: divBox.width,
+          height: divBox.height,
+          background: divBox.background,
+          isResizable: divBox.isResizable,
+        })
+      }, () => {
+        console.log('paste fail')
+      })
+      break
+    }
+    case 'ArrowUp':
+    case 'ArrowDown':
+    case 'ArrowLeft':
+    case 'ArrowRight': {
+      if (boardStore.currentDivBoxIndex !== -1) {
+        const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex]
+        const step = 2
+        if (e.key === 'ArrowUp')
+          divBox.top -= step
+        else if (e.key === 'ArrowDown')
+          divBox.top += step
+        else if (e.key === 'ArrowLeft')
+          divBox.left -= step
+        else if (e.key === 'ArrowRight')
+          divBox.left += step
+      }
+      break
+    }
   }
-  e.preventDefault()
-}, { dedupe: true })
 
-onKeyStroke('v', (e) => {
-  if (e.target !== canvasEl.value)
-    return
-  if (!e.ctrlKey)
-    return
-  console.log('Paste')
-  navigator.clipboard.readText().then((content) => {
-    console.log('paste success', content)
-    const divBox: Base.DivBox = JSON.parse(content)
-    boardStore.drawDivBox({
-      width: divBox.width,
-      height: divBox.height,
-      background: divBox.background,
-      isResizable: divBox.isResizable,
-    })
-  }, () => {
-    console.log('paste fail')
-  })
   e.preventDefault()
 }, { dedupe: true })
 </script>

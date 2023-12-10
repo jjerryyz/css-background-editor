@@ -26,7 +26,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['close', 'update:position'])
+const emit = defineEmits(['close', 'update:position', 'update:isDragging'])
 
 const { editorSelectedMenu } = storeToRefs(useEditorStore())
 
@@ -50,13 +50,21 @@ useDraggable(el, {
     // prevent conflict with resize event
     if (_position.x > props.rect.width - 10 || _position.y > props.rect.height - 10)
       return false
+    emit('update:isDragging', true)
   },
   onMove(_position, e) {
     // console.log('onMove', _position, e.offsetX, e.offsetY)
     if (!isInteractive.value)
       return false
-    emit('update:position', { left: _position.x, top: _position.y })
+    const x = e.clientX - el.value!.parentElement!.offsetLeft - props.rect.width / 2
+    const y = e.clientY - el.value!.parentElement!.offsetTop - props.rect.height / 2
+    emit('update:position', { x, y })
     e.stopPropagation()
+  },
+  onEnd(_position, e) {
+    // console.log('onEnd', _position)
+    emit('update:isDragging', false)
+    // e.stopPropagation()
   },
 })
 
