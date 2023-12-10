@@ -66,7 +66,7 @@ export const useBoardStore = defineStore('board', () => {
     // console.log('onClose', item)
     switch (editorStore.editorSelectedMenu.key) {
       case 'div':
-        if (currentDivBoxIndex.value != -1) {
+        if (currentDivBoxIndex.value !== -1) {
           divBoxConfigs.value.splice(currentDivBoxIndex.value, 1)
           currentDivBoxIndex.value = -1
         }

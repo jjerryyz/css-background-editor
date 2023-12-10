@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useBoardStore } from '@/stores/board'
-import { useEditorStore } from '@/stores/editor'
 
-const editorStore = useEditorStore()
-const { penImageType, penSize, linearGradientObj, radialGradientObj } = storeToRefs(editorStore)
+const { divBoxConfigs } = storeToRefs(useBoardStore())
 
-const { divBoxConfigs, isPointerSelecting, pointerSelectDivStyleObj } = storeToRefs(useBoardStore())
-
+// eslint-disable-next-line unused-imports/no-unused-vars
 function combineDivBoxes(e: MouseEvent) {
   const selected = divBoxConfigs.value.filter(item => item.selected)
   if (selected.length <= 1)

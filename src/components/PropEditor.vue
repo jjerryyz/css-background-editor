@@ -31,19 +31,19 @@ onKeyStroke('Backspace', (e) => {
   if (e.target !== canvasEl.value)
     return
   console.log('Backspace')
-  if (editorSelectedMenu.value.key == 'pointer')
+  if (editorSelectedMenu.value.key === 'pointer')
     boardStore.onClose()
 
   e.preventDefault()
 }, { dedupe: true })
 
 onKeyStroke('c', (e) => {
-  if (e.target != canvasEl.value)
+  if (e.target !== canvasEl.value)
     return
   if (!e.ctrlKey)
     return
   console.log('Copy', boardStore.currentDivBoxIndex)
-  if (boardStore.currentDivBoxIndex != -1) {
+  if (boardStore.currentDivBoxIndex !== -1) {
     const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex]
     const content = JSON.stringify(divBox)
     // set system clipboard

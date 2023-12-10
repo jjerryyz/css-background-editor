@@ -5,7 +5,7 @@ function getSafeStop(stop: number) {
   // fix  round edges
   return stop === 100
     ? 100
-    : stop == 0
+    : stop === 0
       ? 0
       : stop - 0.5
 }
@@ -40,10 +40,6 @@ export const useEditorStore = defineStore('editor', () => {
 
   const pen = ref<string[]>([])
 
-  const penPreviewBg = computed(() => {
-    return getPenImage()
-  })
-
   const getPenImage = () => {
     let image = ''
     if (penImageType.value === 'linear-gradient') {
@@ -54,7 +50,7 @@ export const useEditorStore = defineStore('editor', () => {
     else if (penImageType.value === 'radial-gradient') {
       const { shape: _shape, shapeSize, position, stop, color } = radialGradientObj.value
       let shape = _shape
-      if (shape == 'size')
+      if (shape === 'size')
         shape = shapeSize
 
       if (!shape)
@@ -64,6 +60,10 @@ export const useEditorStore = defineStore('editor', () => {
     }
     return image
   }
+
+  const penPreviewBg = computed(() => {
+    return getPenImage()
+  })
 
   return { editorSelectedMenuIndex, penImageType, linearGradientObj, radialGradientObj, penSize, pen, penPreviewBg, editorSelectedMenu, getPenImage }
 })
