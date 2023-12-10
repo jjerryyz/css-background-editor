@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { useEditorStore } from '@/stores/editor';
-import { useDraggable } from '@vueuse/core';
-import { ref, computed, type PropType } from 'vue';
-import { storeToRefs } from 'pinia';
-
-const { editorSelectedMenu } = storeToRefs(useEditorStore())
+import { useDraggable } from '@vueuse/core'
+import { type PropType, computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useEditorStore } from '@/stores/editor'
 
 const props = defineProps({
   position: {
-    type: Object as PropType<{ left: number; top: number }>,
-    default: () => ({ left: 0, top: 0 })
+    type: Object as PropType<{ left: number, top: number }>,
+    default: () => ({ left: 0, top: 0 }),
   },
   rect: {
-    type: Object as PropType<{ width: number; height: number }>,
-    default: () => ({ width: 50, height: 50 })
+    type: Object as PropType<{ width: number, height: number }>,
+    default: () => ({ width: 50, height: 50 }),
   },
   background: {
     type: Object as PropType<Base.DivBox['background']>,
-    default: () => ([]),
   },
   isSelected: {
     type: Boolean,
@@ -26,19 +23,21 @@ const props = defineProps({
   isResizable: {
     type: Boolean,
     default: true,
-  }
+  },
 })
+
+const emit = defineEmits(['close', 'update:position'])
+
+const { editorSelectedMenu } = storeToRefs(useEditorStore())
 
 const el = ref<HTMLElement | null>(null)
 
-const emit = defineEmits(['close', 'update:position']);
-
-const isInteractive = computed(() => editorSelectedMenu.value.key == 'pointer');
+const isInteractive = computed(() => editorSelectedMenu.value.key === 'pointer')
 
 const backgroundStr = computed(() => {
-  return props.background.map(bg => {
+  return props.background?.map((bg) => {
     return `${bg.image} ${bg.x}px ${bg.y}px / ${bg.w}px ${bg.h}px`
-  }).join(',');
+  }).join(',') || ''
 })
 
 useDraggable(el, {
@@ -47,42 +46,40 @@ useDraggable(el, {
     // console.log('onStart', _position)
     e.stopPropagation()
     if (!isInteractive.value)
-      return false;
-    // prevent conflict with resize event
-    if (_position.x > props.rect.width - 10 || _position.y > props.rect.height - 10) {
       return false
-    }
+    // prevent conflict with resize event
+    if (_position.x > props.rect.width - 10 || _position.y > props.rect.height - 10)
+      return false
   },
   onMove(_position, e) {
     // console.log('onMove', _position, e.offsetX, e.offsetY)
     if (!isInteractive.value)
-      return false;
+      return false
     emit('update:position', { left: _position.x, top: _position.y })
     e.stopPropagation()
-  }
+  },
 })
 
-const onClose = () => {
+function onClose() {
   emit('close')
 }
-
-
 </script>
 
-
-
 <template>
-  <div ref="el"
-    :style="{ left: position.left + 'px', top: position.top + 'px', width: rect.width + 'px', height: rect.height + 'px', background: backgroundStr }"
-    class="box-content absolute w-50 h-50   bg-no-repeat!"
-    :class="[isInteractive && isSelected ? 'border border-solid border-green!' : '']">
-
+  <div
+    ref="el"
+    :style="{ left: `${position.left}px`, top: `${position.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, background: backgroundStr }"
+    class="absolute box-content h-50 w-50 bg-no-repeat!"
+    :class="[isInteractive && isSelected ? 'border border-solid border-green!' : '']"
+  >
     <!-- close handle -->
-    <div v-show="isInteractive && isSelected"
-      class="i-ph-x-circle-fill absolute z-10 right-0 top-0 hover:color-green translate-y--1/2 translate-x-1/2"
-      @click.stop="onClose" />
+    <div
+      v-show="isInteractive && isSelected"
+      class="i-ph-x-circle-fill absolute right-0 top-0 z-10 translate-x-1/2 translate-y--1/2 hover:color-green"
+      @click.stop="onClose"
+    />
 
     <!-- resize handle -->
-    <div v-show="isInteractive && isResizable && isSelected" id="resize" class="w-full h-full resize overflow-hidden" />
+    <div v-show="isInteractive && isResizable && isSelected" id="resize" class="h-full w-full resize overflow-hidden" />
   </div>
 </template>

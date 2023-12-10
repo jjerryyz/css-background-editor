@@ -1,66 +1,70 @@
 <script setup lang="ts">
-import { useEditorStore } from '@/stores/editor';
-import { storeToRefs } from 'pinia';
-import PropEditorPointer from './PropEditorPointer.vue';
-import PropEditorPen from './PropEditorPen.vue';
-import { editorMenus } from '@/stores/editor';
-import { useBoardStore } from '@/stores/board';
+import { storeToRefs } from 'pinia'
+import { onKeyStroke } from '@vueuse/core'
+import PropEditorPointer from './PropEditorPointer.vue'
+import PropEditorPen from './PropEditorPen.vue'
+import { editorMenus, useEditorStore } from '@/stores/editor'
 
-import { onKeyStroke } from '@vueuse/core';
+import { useBoardStore } from '@/stores/board'
 
-const boardStore = useBoardStore();
-const { divBoxConfigs, canvasEl } = storeToRefs(boardStore);
+const boardStore = useBoardStore()
+const { divBoxConfigs, canvasEl } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore()
 const { editorSelectedMenuIndex, editorSelectedMenu } = storeToRefs(editorStore)
 
-const clearCanvas = () => {
-  divBoxConfigs.value = [];
+function clearCanvas() {
+  divBoxConfigs.value = []
 }
 
 onKeyStroke(['1', '2', '3'], (e) => {
-  if (e.target != canvasEl.value) return;
-  const index = Number(e.key) - 1;
+  console.log('1,2,3', e.target)
+  const index = Number(e.key) - 1
 
-  editorSelectedMenuIndex.value = index;
+  editorSelectedMenuIndex.value = index
   boardStore.onSwitchMenu()
 
-  e.preventDefault();
-}, { dedupe: true })
+  e.preventDefault()
+}, { dedupe: true, target: canvasEl.value })
 
 onKeyStroke('Backspace', (e) => {
-  if (e.target != canvasEl.value) return;
+  if (e.target !== canvasEl.value)
+    return
   console.log('Backspace')
-  if (editorSelectedMenu.value.key == 'pointer') {
-    boardStore.onClose();
-  }
-  e.preventDefault();
+  if (editorSelectedMenu.value.key == 'pointer')
+    boardStore.onClose()
+
+  e.preventDefault()
 }, { dedupe: true })
 
 onKeyStroke('c', (e) => {
-  if (e.target != canvasEl.value) return;
-  if (!e.ctrlKey) return;
+  if (e.target != canvasEl.value)
+    return
+  if (!e.ctrlKey)
+    return
   console.log('Copy', boardStore.currentDivBoxIndex)
   if (boardStore.currentDivBoxIndex != -1) {
-    const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex];
-    const content = JSON.stringify(divBox);
+    const divBox = boardStore.divBoxConfigs[boardStore.currentDivBoxIndex]
+    const content = JSON.stringify(divBox)
     // set system clipboard
     navigator.clipboard.writeText(content).then(() => {
       console.log('copy success')
     }, () => {
       console.log('copy fail')
-    });
+    })
   }
-  e.preventDefault();
+  e.preventDefault()
 }, { dedupe: true })
 
 onKeyStroke('v', (e) => {
-  if (e.target != canvasEl.value) return;
-  if (!e.ctrlKey) return;
+  if (e.target !== canvasEl.value)
+    return
+  if (!e.ctrlKey)
+    return
   console.log('Paste')
   navigator.clipboard.readText().then((content) => {
     console.log('paste success', content)
-    const divBox: Base.DivBox = JSON.parse(content);
+    const divBox: Base.DivBox = JSON.parse(content)
     boardStore.drawDivBox({
       width: divBox.width,
       height: divBox.height,
@@ -69,36 +73,34 @@ onKeyStroke('v', (e) => {
     })
   }, () => {
     console.log('paste fail')
-  });
-  e.preventDefault();
+  })
+  e.preventDefault()
 }, { dedupe: true })
-
 </script>
 
 <template>
-  <div class="mt-4 p-4 h-full flex-1 border border-solid border-slate-4 rounded-10 hover:border-green">
+  <div class="mt-4 h-full flex-1 border border-slate-4 rounded-10 border-solid p-4 hover:border-green">
     <div>
-      <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-        @click="clearCanvas">Clear</button>
+      <button class="rounded bg-green-500 px-4 py-2 text-white font-bold hover:bg-green-700" @click="clearCanvas">
+        Clear
+      </button>
     </div>
 
-    <!-- <div class="flex items-center">
-      <span class="w-[6em]">preview: </span>
-      <PenPreview :left="0" :top="0" />
-    </div> -->
-
-    <div class="my-2 p-4 border-[0.5px] border-solid border-slate-4 rounded flex items-center flex-wrap gap-2 ">
-      <div v-for="(item, index) in editorMenus" :key="index"
-        :class="['flex flex-col', 'fn-div', editorSelectedMenuIndex === index ? 'bg-green-700' : '']"
-        @click="editorSelectedMenuIndex = index">
-        <div :class="['fn-div-icon', item.icon]"></div>
-        <div class="absolute right-[1px] bottom-0 pointer-events-none text-sm">{{ index + 1 }}</div>
+    <div class="my-2 flex flex-wrap items-center gap-2 border-[0.5px] border-slate-4 rounded border-solid p-4">
+      <div
+        v-for="(item, index) in editorMenus" :key="index" class="fn-div flex flex-col"
+        :class="[editorSelectedMenuIndex === index ? 'bg-green-700' : '']" @click="editorSelectedMenuIndex = index"
+      >
+        <div class="fn-div-icon" :class="[item.icon]" />
+        <div class="pointer-events-none absolute bottom-0 right-[1px] text-sm">
+          {{ index + 1 }}
+        </div>
       </div>
     </div>
 
-    <PropEditorPointer v-if="editorSelectedMenu.key == 'pointer'" />
+    <PropEditorPointer v-if="editorSelectedMenu.key === 'pointer'" />
 
-    <PropEditorPen v-if="editorSelectedMenu.key == 'div'" />
+    <PropEditorPen v-if="editorSelectedMenu.key === 'div'" />
   </div>
 </template>
 
