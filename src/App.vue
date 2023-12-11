@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import PanelBoard from './components/PanelBoard.vue'
+import { useShortcut } from './composables/shortcut'
 import PropEditor from '@/components/PropEditor.vue'
-import DivLayer from '@/components/DivBoxLayer.vue'
+
+useShortcut()
 </script>
 
 <template>

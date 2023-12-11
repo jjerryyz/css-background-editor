@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, watch } from 'vue'
 import DivBox from './DivBox.vue'
-import PenPreview from './PenPreview.vue'
 import { useEditorStore } from '@/stores/editor'
 import { useBoardStore } from '@/stores/board'
 
@@ -13,7 +12,7 @@ const { align2Board, align2NearestBox } = boardStore
 const { isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, canvasEl, divBoxConfigs, currentDivBoxIndex, alignLineHStyle, alignLineVStyle } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore()
-const { pen, penSize, editorSelectedMenu } = storeToRefs(editorStore)
+const { pen, editorSelectedMenu } = storeToRefs(editorStore)
 
 let hoveringTarget: HTMLElement | null = null
 

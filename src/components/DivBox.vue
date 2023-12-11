@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDraggable } from '@vueuse/core'
+import { useDraggable, useEventListener } from '@vueuse/core'
 import { type PropType, computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEditorStore } from '@/stores/editor'
