@@ -1,20 +1,22 @@
 <script setup lang="ts">
-import { useDebounceFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, onUnmounted, watch } from 'vue'
 import DivBox from './DivBox.vue'
 import { useEditorStore } from '@/stores/editor'
 import { useBoardStore } from '@/stores/board'
+import { useMenuPointer } from '@/composables/menuPointer'
+import { useMenuDiv } from '@/composables/menuDiv'
 
 const boardStore = useBoardStore()
 const { align2Board, align2NearestBox } = boardStore
 
-const { isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, canvasEl, divBoxConfigs, currentDivBoxIndex, alignLineHStyle, alignLineVStyle } = storeToRefs(boardStore)
+const { isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, canvasEl, hoveringTarget, divBoxConfigs, currentDivBoxIndex, alignLineHStyle, alignLineVStyle } = storeToRefs(boardStore)
 
 const editorStore = useEditorStore()
 const { pen, editorSelectedMenu } = storeToRefs(editorStore)
 
-let hoveringTarget: HTMLElement | null = null
+const menuPointer = useMenuPointer()
+const menuDiv = useMenuDiv()
 
 const backgroundStyle = computed(() => pen.value.join(','))
 
@@ -32,7 +34,7 @@ const isDivBoxPointless = computed(() => {
     case 'pointer':
       return isPointerSelecting.value
     case 'div':
-      return hoveringTarget === canvasEl.value
+      return hoveringTarget.value === canvasEl.value
     case 'pen':
       return true
     default:
@@ -75,19 +77,6 @@ onUnmounted(() => {
   resizeObserver.disconnect()
 })
 
-const checkDivBoxSelected = useDebounceFn(() => {
-  for (let i = 0; i < divBoxConfigs.value.length; i++) {
-    const item = divBoxConfigs.value[i]
-    const { left, top, width, height } = item
-    const rect = pointerSelectDivStyleObj.value
-
-    if (rect.left < left && rect.left + rect.width > left + width && rect.top < top && rect.top + rect.height > top + height)
-      item.selected = true
-    else
-      item.selected = false
-  }
-}, 10)
-
 function onUpdatePosition(divBox: Base.DivBox, position: { x: number, y: number, e: PointerEvent }) {
   // find the nearest divBox
   let x = 0; let y = 0
@@ -113,35 +102,12 @@ function onDragEnd() {
   alignLineVStyle.value = undefined
 }
 
-function handleSelectDivBox(e: PointerEvent) {
-  const target = e.target as HTMLElement
-  const targetId = target.id
-  // handle click divbox
-  let index = -1
-  if (targetId === 'resize')
-    index = +target.parentElement!.id.split('_')[1]
-  else
-    index = +targetId.split('_')[1]
-
-  currentDivBoxIndex.value = index
-
-  if (e.ctrlKey) {
-    // ctrl key to toggle index divbox's select
-    divBoxConfigs.value[index].selected = !divBoxConfigs.value[index].selected
-    return
-  }
-
-  divBoxConfigs.value.forEach((item, i) => {
-    item.selected = i === index
-  })
-}
-
 function updateOffset(e: MouseEvent) {
   offset.value.x = e.clientX - canvasEl.value!.getBoundingClientRect().left
   offset.value.y = e.clientY - canvasEl.value!.getBoundingClientRect().top
 }
 
-function onPointerDown(e: MouseEvent) {
+function onPointerDown(e: PointerEvent) {
   isClick.value = true
 
   updateOffset(e)
@@ -150,14 +116,11 @@ function onPointerDown(e: MouseEvent) {
 
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
+      menuPointer.onPointerDown(e)
       break
     }
     case 'div': {
-      // clear select box
-      // if (currentDivBoxIndex.value !== -1)
-      //   currentDivBoxIndex.value = -1
-
-      // boardStore.drawDivBox()
+      menuDiv.onPointerDown(e)
       break
     }
     default:
@@ -171,22 +134,17 @@ function onPointerMove(e: PointerEvent) {
   else
     isPointerSelecting.value = false
 
-  hoveringTarget = e.target as HTMLElement
+  hoveringTarget.value = e.target as HTMLElement
 
   updateOffset(e)
 
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
-      // check if divBox is Selected
-      if (isPointerSelecting.value && hoveringTarget === canvasEl.value) {
-        checkDivBoxSelected()
-      }
-      else if (hoveringTarget.id === 'resize' || hoveringTarget.id!.startsWith('divbox_')) {
-        // TODO: select divbox when draging
-      }
+      menuPointer.onPointerMove(e)
       break
     }
     case 'div': {
+      menuDiv.onPointerMove(e)
       break
     }
     case 'pen':
@@ -200,37 +158,15 @@ function onPointerMove(e: PointerEvent) {
 
 function onPointerUp(e: PointerEvent) {
   // console.log('onPointerUp', e)
-
-  const target = e.target as HTMLElement
-  const targetId = target.id
-
   updateOffset(e)
 
   switch (editorSelectedMenu.value.key) {
     case 'pointer': {
-      // handle pointer select
-      if (isPointerSelecting.value) {
-        checkDivBoxSelected()
-        break
-      }
-      // handle click board
-      if (target === canvasEl.value)
-        divBoxConfigs.value.forEach(item => item.selected = false)
-      else if (targetId === 'resize' || targetId!.startsWith('divbox_'))
-        handleSelectDivBox(e)
-
+      menuPointer.onPointerUp(e)
       break
     }
     case 'div': {
-      if (isPointerSelecting) {
-        boardStore.drawDivBox({
-          left: pointerSelectDivStyleObj.value.left,
-          top: pointerSelectDivStyleObj.value.top,
-          width: pointerSelectDivStyleObj.value.width,
-          height: pointerSelectDivStyleObj.value.height,
-        })
-      }
-
+      menuDiv.onPointerUp(e)
       break
     }
     default:
@@ -242,7 +178,7 @@ function onPointerUp(e: PointerEvent) {
 
 function onPointerLeave() {
   isPointerSelecting.value = false
-  hoveringTarget = null
+  hoveringTarget.value = undefined
   isClick.value = false
   offset.value.x = 0
   offset.value.y = 0

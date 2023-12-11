@@ -38,6 +38,8 @@ export const useBoardStore = defineStore('board', () => {
     return { left, top, width, height }
   })
 
+  const hoveringTarget = ref<HTMLElement>()
+
   const align2Board = (value: number) => align2Range(value, [0, canvasEl.value!.offsetWidth])
 
   const alignLineHStyle = ref<{ left: string, top: string, width: string, height: string }>()
@@ -170,5 +172,5 @@ export const useBoardStore = defineStore('board', () => {
     currentDivBoxIndex.value = -1
   }
 
-  return { canvasEl, divBoxConfigs, isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, currentDivBoxIndex, alignLineHStyle, alignLineVStyle, align2NearestBox, align2Board, drawDivBox, onClose, onSwitchMenu }
+  return { canvasEl, hoveringTarget, divBoxConfigs, isClick, isPointerSelecting, pointerSelectDivStyleObj, pressOffset, offset, currentDivBoxIndex, alignLineHStyle, alignLineVStyle, align2NearestBox, align2Board, drawDivBox, onClose, onSwitchMenu }
 })
