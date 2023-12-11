@@ -9,8 +9,6 @@ import DivLayer from '@/components/DivBoxLayer.vue'
     Css Editor
   </div>
   <div class="h-full w-full flex">
-    <DivLayer />
-
     <PanelBoard />
 
     <PropEditor />

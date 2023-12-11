@@ -4,7 +4,8 @@ css background editor
 
 # TODO
 
-[x] align line in board
-[ ] copy/paste divbox
-[ ] optimize divbox initial position when draging
-[ ] bring top to back
+[ ] Right-Click Menu
+[ ] Bring top to back
+[x] Align line in board
+[x] Copy/Paste divbox
+[x] Optimize divbox initial position when draging
